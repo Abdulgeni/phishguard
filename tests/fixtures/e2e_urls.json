@@ -1,0 +1,12 @@
+{
+  "benign": [
+    "https://www.acme-books.com/",
+    "https://brightlane.org/about",
+    "https://help.cedarmail.net/faq"
+  ],
+  "phishing": [
+    "http://paypa1-secure-login.xyz/signin/verify.php?session=8f3a9c",
+    "http://amaz0n-orders-help.top/verify/payment/id=2291",
+    "http://netfl1x-billing-update.cc/login.php?error=1"
+  ]
+}

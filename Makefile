@@ -44,14 +44,23 @@ train-fixture:  ## train a fixture model from tests/fixtures/tiny.csv -> artifac
 evaluate:  ## evaluate saved model, non-zero if F1 < MIN_F1
 	$(UV) run python -m scripts.evaluate
 
-build:  ## docker compose build (Step 12)
-	$(call not_yet,build,12)
+build:  ## docker compose build (bakes the model into the image)
+	$(UV) run python -m scripts.train_fixture
+	docker compose build
 
-demo:  ## classify 3 phishing + 3 benign URLs end to end (Step 12)
-	$(call not_yet,demo,12)
+demo:  ## start the container, classify the fixture set, print a pass/fail table
+	$(UV) run python -m scripts.train_fixture
+	docker compose up -d --build app
+	bash demos/_wait_for_health.sh
+	bash demos/demo.sh
+	status=$$? ; docker compose down -v ; exit $$status
 
-demo-degraded:  ## same URLs with WHOIS_DISABLED=true (Step 12)
-	$(call not_yet,demo-degraded,12)
+demo-degraded:  ## same fixture set with WHOIS_DISABLED=true
+	$(UV) run python -m scripts.train_fixture
+	WHOIS_DISABLED=true docker compose up -d --build app
+	bash demos/_wait_for_health.sh
+	bash demos/demo-degraded.sh
+	status=$$? ; docker compose down -v ; exit $$status
 
 demo-budget:  ## slow-WHOIS scenario against the request budget (Step 13)
 	$(call not_yet,demo-budget,13)

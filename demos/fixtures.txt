@@ -1,0 +1,7 @@
+# url<TAB>expected_label<TAB>min_confidence
+https://www.acme-books.com/	benign	0.5
+https://brightlane.org/about	benign	0.5
+https://help.cedarmail.net/faq	benign	0.5
+http://paypa1-secure-login.xyz/signin/verify.php?session=8f3a9c	phishing	0.5
+http://amaz0n-orders-help.top/verify/payment/id=2291	phishing	0.5
+http://netfl1x-billing-update.cc/login.php?error=1	phishing	0.5
