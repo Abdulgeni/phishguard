@@ -105,7 +105,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         model = bundle["pipeline"]
         if not hasattr(model, "predict_proba"):
             raise EvaluateError("model artifact pipeline has no predict_proba")
-        proba = model.predict_proba(x)[:, 1]  # type: ignore[attr-defined]
+        proba = model.predict_proba(x)[:, 1]
         metrics = compute_metrics(y.to_numpy(), proba)
         cm = confusion(y.to_numpy(), proba)
     except (EvaluateError, FileNotFoundError, ValueError) as exc:

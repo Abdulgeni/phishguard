@@ -29,8 +29,8 @@ typecheck:  ## mypy --strict on app/ and scripts/
 test:  ## pytest
 	$(UV) run pytest
 
-run:  ## uvicorn locally, no Docker (Step 9)
-	$(call not_yet,run,9)
+run:  ## uvicorn locally, no Docker
+	$(UV) run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 train:  ## train on data/normalized.parquet or $DATASET_PATH -> artifacts/
 	$(UV) run python -m scripts.train
