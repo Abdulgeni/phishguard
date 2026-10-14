@@ -6,7 +6,7 @@ define not_yet
 endef
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test run train train-fixture evaluate build \
+.PHONY: help install lint format typecheck test run run-dev train train-fixture evaluate build \
 	demo demo-degraded demo-budget demo-email clean
 
 help:  ## List targets
@@ -30,6 +30,9 @@ test:  ## pytest
 	$(UV) run pytest
 
 run:  ## uvicorn locally, no Docker
+	$(UV) run uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+run-dev:  ## uvicorn with autoreload (for local iteration only)
 	$(UV) run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 train:  ## train on data/normalized.parquet or $DATASET_PATH -> artifacts/

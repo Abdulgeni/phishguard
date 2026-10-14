@@ -123,11 +123,46 @@ class Predictor:
         )
 
     def _explanation(self) -> dict[str, object] | None:
-        """Global feature importances from the underlying tree, if available."""
-        base = getattr(self._bundle.model, "named_steps", {}).get("clf")
-        importances = getattr(base, "feature_importances_", None)
+        """Global feature importances from the underlying tree, if available.
+
+        The model may be stored in three shapes:
+
+        * a raw estimator (e.g. ``RandomForestClassifier``),
+        * a ``Pipeline([("clf", estimator)])``,
+        * a ``Pipeline([("clf", CalibratedClassifierCV(...))])``.
+
+        We walk those shapes looking for a fitted estimator that exposes
+        ``feature_importances_``. If none is found, we return ``None`` — the
+        explanation is best-effort.
+        """
+        importances = self._find_importances(self._bundle.model)
         if importances is None:
             return None
         pairs = zip(FEATURE_NAMES, (float(v) for v in importances), strict=True)
         top = sorted(pairs, key=lambda kv: kv[1], reverse=True)[:10]
         return {"global_importance": dict(top)}
+
+    @staticmethod
+    def _find_importances(model: object) -> object | None:
+        """Best-effort search for ``feature_importances_`` in a saved model."""
+        direct = getattr(model, "feature_importances_", None)
+        if direct is not None:
+            return direct
+        named_steps = getattr(model, "named_steps", None)
+        if isinstance(named_steps, dict):
+            for step in named_steps.values():
+                found = Predictor._find_importances(step)
+                if found is not None:
+                    return found
+        # CalibratedClassifierCV exposes .calibrated_classifiers_ (a list of wrappers).
+        calibrated = getattr(model, "calibrated_classifiers_", None)
+        if isinstance(calibrated, list):
+            for wrapper in calibrated:
+                found = Predictor._find_importances(wrapper)
+                if found is not None:
+                    return found
+        # The wrapper around the frozen estimator holds `.estimator`.
+        inner = getattr(model, "estimator", None)
+        if inner is not None and inner is not model:
+            return Predictor._find_importances(inner)
+        return None

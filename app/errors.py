@@ -21,7 +21,7 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(InvalidUrlError)
     async def _invalid_url(_request: Request, exc: InvalidUrlError) -> JSONResponse:
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=_payload(f"invalid_url:{exc.reason}", exc.detail),
         )
 
@@ -31,6 +31,6 @@ def install_error_handlers(app: FastAPI) -> None:
         location = ".".join(str(part) for part in first.get("loc", ()))
         detail = str(first.get("msg", "request validation failed"))
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=_payload("validation_error", f"{location}: {detail}".strip(": ")),
         )
