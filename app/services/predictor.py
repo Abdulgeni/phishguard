@@ -138,14 +138,24 @@ class Predictor:
         importances = self._find_importances(self._bundle.model)
         if importances is None:
             return None
-        pairs = zip(FEATURE_NAMES, (float(v) for v in importances), strict=True)
+        pairs = zip(FEATURE_NAMES, importances, strict=True)
         top = sorted(pairs, key=lambda kv: kv[1], reverse=True)[:10]
         return {"global_importance": dict(top)}
 
     @staticmethod
-    def _find_importances(model: object) -> object | None:
+    def _coerce_importances(value: object) -> tuple[float, ...] | None:
+        """Convert ``feature_importances_`` to a tuple of floats, or None if unusable."""
+        if value is None or not hasattr(value, "__iter__"):
+            return None
+        try:
+            return tuple(float(v) for v in value)  # type: ignore[union-attr]
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _find_importances(model: object) -> tuple[float, ...] | None:
         """Best-effort search for ``feature_importances_`` in a saved model."""
-        direct = getattr(model, "feature_importances_", None)
+        direct = Predictor._coerce_importances(getattr(model, "feature_importances_", None))
         if direct is not None:
             return direct
         named_steps = getattr(model, "named_steps", None)
@@ -154,14 +164,12 @@ class Predictor:
                 found = Predictor._find_importances(step)
                 if found is not None:
                     return found
-        # CalibratedClassifierCV exposes .calibrated_classifiers_ (a list of wrappers).
         calibrated = getattr(model, "calibrated_classifiers_", None)
         if isinstance(calibrated, list):
             for wrapper in calibrated:
                 found = Predictor._find_importances(wrapper)
                 if found is not None:
                     return found
-        # The wrapper around the frozen estimator holds `.estimator`.
         inner = getattr(model, "estimator", None)
         if inner is not None and inner is not model:
             return Predictor._find_importances(inner)
