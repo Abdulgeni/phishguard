@@ -1,0 +1,18 @@
+# artifacts/ is deliberately NOT ignored: the model is baked into the image.
+.git/
+.github/
+.env
+.venv/
+venv/
+data/
+tests/
+notebooks/
+demos/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/

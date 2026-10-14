@@ -1,0 +1,12 @@
+URL,Status
+HTTPS://WWW.Example-Shop.com/Cart,good
+https://www.example-shop.com:443/Cart,good
+news-site.org/world,good
+http://conflict-site.com/x,good
+http://conflict-site.com/x,bad
+ftp://files.example.org/a,good
+,bad
+http://bücher.example.com/shop,good
+http://[2001:db8::1]/login,bad
+http://bad host.com/x,bad
+http://evil.com/a,bad

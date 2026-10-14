@@ -1,0 +1,61 @@
+UV ?= uv
+PKGS := app scripts tests
+
+define not_yet
+	@echo "make $(1): not implemented until Step $(2)." >&2; exit 1
+endef
+
+.DEFAULT_GOAL := help
+.PHONY: help install lint format typecheck test run train train-fixture evaluate build \
+	demo demo-degraded demo-budget demo-email clean
+
+help:  ## List targets
+	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/' | sort
+
+install:  ## Sync the uv-managed venv with all extras
+	$(UV) sync --all-extras
+
+lint:  ## ruff lint + format check
+	$(UV) run ruff check $(PKGS)
+	$(UV) run ruff format --check $(PKGS)
+
+format:  ## ruff autofix + format
+	$(UV) run ruff check --fix $(PKGS)
+	$(UV) run ruff format $(PKGS)
+
+typecheck:  ## mypy --strict on app/ and scripts/
+	$(UV) run mypy app scripts
+
+test:  ## pytest
+	$(UV) run pytest
+
+run:  ## uvicorn locally, no Docker (Step 9)
+	$(call not_yet,run,9)
+
+train:  ## train on data/normalized.parquet or $DATASET_PATH -> artifacts/
+	$(UV) run python -m scripts.train
+
+train-fixture:  ## train a fixture model from tests/fixtures/tiny.csv -> artifacts/
+	$(UV) run python -m scripts.train_fixture
+
+evaluate:  ## evaluate saved model, non-zero if F1 < MIN_F1
+	$(UV) run python -m scripts.evaluate
+
+build:  ## docker compose build (Step 12)
+	$(call not_yet,build,12)
+
+demo:  ## classify 3 phishing + 3 benign URLs end to end (Step 12)
+	$(call not_yet,demo,12)
+
+demo-degraded:  ## same URLs with WHOIS_DISABLED=true (Step 12)
+	$(call not_yet,demo-degraded,12)
+
+demo-budget:  ## slow-WHOIS scenario against the request budget (Step 13)
+	$(call not_yet,demo-budget,13)
+
+demo-email:  ## email body with 2 phishing + 1 benign URL (Step 14)
+	$(call not_yet,demo-email,14)
+
+clean:  ## remove caches and build output (keeps artifacts/ and data/)
+	rm -rf .pytest_cache .mypy_cache .ruff_cache build dist *.egg-info
+	find . -type d -name __pycache__ -not -path "./.git/*" -prune -exec rm -rf {} +

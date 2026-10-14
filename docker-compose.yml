@@ -1,0 +1,29 @@
+# Stub (Step 2). The Dockerfile arrives in Step 12; until then `docker compose
+# config -q` validates this file but `docker compose build` will fail.
+
+x-app-env: &app-env
+  APP_ENV: ${APP_ENV:-prod}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  MODEL_PATH: ${MODEL_PATH:-/app/artifacts/model.joblib}
+  ENABLE_EXPLANATIONS: ${ENABLE_EXPLANATIONS:-false}
+  REQUEST_BUDGET_SECONDS: ${REQUEST_BUDGET_SECONDS:-3}
+  EMAIL_REQUEST_BUDGET_SECONDS: ${EMAIL_REQUEST_BUDGET_SECONDS:-10}
+  WHOIS_DISABLED: ${WHOIS_DISABLED:-false}
+  WHOIS_TIMEOUT_SECONDS: ${WHOIS_TIMEOUT_SECONDS:-2}
+  WHOIS_FAKE_DELAY_SECONDS: ${WHOIS_FAKE_DELAY_SECONDS:-0}
+
+services:
+  app:                      # model baked into the image
+    build: .
+    ports:
+      - "8000:8000"
+    environment: *app-env
+
+  app-dev:                  # mounts ./artifacts read-only; use: docker compose --profile dev up app-dev
+    profiles: ["dev"]
+    build: .
+    ports:
+      - "8000:8000"
+    environment: *app-env
+    volumes:
+      - ./artifacts:/app/artifacts:ro
