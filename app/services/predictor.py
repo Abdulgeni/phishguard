@@ -148,7 +148,7 @@ class Predictor:
         if value is None or not hasattr(value, "__iter__"):
             return None
         try:
-            return tuple(float(v) for v in value)  # type: ignore[union-attr]
+            return tuple(float(v) for v in value)
         except (TypeError, ValueError):
             return None
 
