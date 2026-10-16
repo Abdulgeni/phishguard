@@ -6,7 +6,7 @@ define not_yet
 endef
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test run run-dev train train-fixture evaluate build \
+.PHONY: help install lint format typecheck test run run-dev train train-fixture evaluate build \ model-card
 	demo demo-degraded demo-budget demo-email clean
 
 help:  ## List targets
@@ -43,6 +43,9 @@ train-fixture:  ## train a fixture model from tests/fixtures/tiny.csv -> artifac
 
 evaluate:  ## evaluate saved model, non-zero if F1 < MIN_F1
 	$(UV) run python -m scripts.evaluate
+
+model-card:  ## render artifacts/model_card.json to stdout (Markdown)
+	$(UV) run python -m scripts.render_model_card
 
 build:  ## docker compose build (bakes the model into the image)
 	$(UV) run python -m scripts.train_fixture
