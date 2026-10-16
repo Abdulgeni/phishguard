@@ -25,8 +25,8 @@ def render(card: dict[str, Any]) -> str:
     lines: list[str] = []
     lines.append("## Model card")
     lines.append("")
-    lines.append(f"| Field | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Field | Value |")
+    lines.append("|---|---|")
     for key in (
         "model_version",
         "trained_at",
@@ -39,8 +39,8 @@ def render(card: dict[str, Any]) -> str:
 
     lines.append("### Dataset split")
     lines.append("")
-    lines.append(f"| Field | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Field | Value |")
+    lines.append("|---|---|")
     split = card.get("split", {})
     lines.append(f"| `kind` | {_fmt(split.get('kind'))} |")
     lines.append(f"| `rows` | {_fmt(split.get('rows'))} |")
@@ -70,9 +70,11 @@ def render(card: dict[str, Any]) -> str:
     model = card.get("model", {})
     lines.append(f"- Winner: **{model.get('winner', '?')}**")
     lines.append(f"- Validation F1: {_fmt(model.get('winner_val_f1'))}")
-    lines.append(f"- Calibrated: {model.get('calibrated')} "
-                 f"(Brier before: {_fmt(model.get('brier_before_calibration'))}, "
-                 f"threshold: {_fmt(model.get('calibration_threshold'))})")
+    lines.append(
+        f"- Calibrated: {model.get('calibrated')} "
+        f"(Brier before: {_fmt(model.get('brier_before_calibration'))}, "
+        f"threshold: {_fmt(model.get('calibration_threshold'))})"
+    )
     lines.append("")
 
     lines.append("### Features")

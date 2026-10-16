@@ -964,7 +964,6 @@ dependencies = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pandas" },
-    { name = "pyarrow" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-whois" },
@@ -983,6 +982,9 @@ dev = [
     { name = "pytest-mock" },
     { name = "ruff" },
 ]
+train = [
+    { name = "pyarrow" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -994,7 +996,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "pandas", specifier = ">=2.2" },
-    { name = "pyarrow", specifier = ">=16" },
+    { name = "pyarrow", marker = "extra == 'train'", specifier = ">=16" },
     { name = "pydantic", specifier = ">=2.8" },
     { name = "pydantic-settings", specifier = ">=2.4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
@@ -1007,7 +1009,7 @@ requires-dist = [
     { name = "tldextract", specifier = ">=5.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["train", "dev"]
 
 [[package]]
 name = "pluggy"
