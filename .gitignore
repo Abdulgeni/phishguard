@@ -20,6 +20,10 @@ htmlcov/
 # Generated at train time
 artifacts/
 data/
+!app/data/
+!app/data/*.py
+!app/features/data/
+!app/features/data/*.txt
 
 # Notebooks: only the README is tracked
 notebooks/*
