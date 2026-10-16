@@ -60,17 +60,21 @@ demo:  ## start the container, classify the fixture set, print a pass/fail table
 
 demo-degraded:  ## same fixture set with WHOIS_DISABLED=true
 	$(UV) run python -m scripts.train_fixture
-	WHOIS_DISABLED=true docker compose up -d --build app
-	bash demos/_wait_for_health.sh
-	bash demos/demo-degraded.sh
-	status=$$? ; docker compose down -v ; exit $$status
+	export WHOIS_DISABLED=true ; \
+	 docker compose up -d --build app ; \
+	 bash demos/_wait_for_health.sh ; \
+	 bash demos/demo-degraded.sh ; \
+	 status=$$? ; docker compose down -v ; exit $$status
 
 demo-budget:  ## slow-WHOIS scenario against the request budget
 	$(UV) run python -m scripts.train_fixture
-	APP_ENV=test WHOIS_FAKE_DELAY_SECONDS=5 REQUEST_BUDGET_SECONDS=1 docker compose up -d --build app
-	bash demos/_wait_for_health.sh
-	bash demos/demo-budget.sh
-	status=$$? ; docker compose down -v ; exit $$status
+	export APP_ENV=test ; \
+	 export WHOIS_FAKE_DELAY_SECONDS=5 ; \
+	 export REQUEST_BUDGET_SECONDS=1 ; \
+	 docker compose up -d --build app ; \
+	 bash demos/_wait_for_health.sh ; \
+	 bash demos/demo-budget.sh ; \
+	 status=$$? ; docker compose down -v ; exit $$status
 
 demo-email:  ## email body with 2 phishing + 1 benign URL
 	$(UV) run python -m scripts.train_fixture
