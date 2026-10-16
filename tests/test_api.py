@@ -124,3 +124,42 @@ async def test_openapi_docs_available(client: AsyncClient) -> None:
     paths = r.json()["paths"]
     assert "/predict" in paths
     assert "/health" in paths
+    assert "/predict_email" in paths
+
+
+async def test_predict_email_aggregate_phishing(client: AsyncClient) -> None:
+    body = {
+        "body": (
+            "Hi, please verify your account at "
+            "http://paypa1-secure-login.xyz/verify and then "
+            "http://amaz0n-orders-help.top/confirm"
+        )
+    }
+    r = await client.post("/predict_email", json=body)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert set(data) == {"urls", "aggregate", "truncated", "model_version"}
+    assert data["aggregate"]["total"] == 2
+    assert data["truncated"] is False
+    for entry in data["urls"]:
+        assert entry["label"] in {"phishing", "benign"}
+        assert 0.0 <= entry["confidence"] <= 1.0
+
+
+async def test_predict_email_no_urls_returns_clean(client: AsyncClient) -> None:
+    r = await client.post("/predict_email", json={"body": "nothing to see here"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["urls"] == []
+    assert data["aggregate"] == {"verdict": "clean", "phishing_count": 0, "total": 0}
+    assert data["truncated"] is False
+
+
+async def test_predict_email_rejects_empty_body(client: AsyncClient) -> None:
+    r = await client.post("/predict_email", json={"body": ""})
+    assert r.status_code == 422
+
+
+async def test_predict_email_rejects_unknown_field(client: AsyncClient) -> None:
+    r = await client.post("/predict_email", json={"body": "x", "extra": 1})
+    assert r.status_code == 422

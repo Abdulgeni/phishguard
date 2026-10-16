@@ -69,8 +69,12 @@ demo-budget:  ## slow-WHOIS scenario against the request budget
 	bash demos/demo-budget.sh
 	status=$$? ; docker compose down -v ; exit $$status
 
-demo-email:  ## email body with 2 phishing + 1 benign URL (Step 14)
-	$(call not_yet,demo-email,14)
+demo-email:  ## email body with 2 phishing + 1 benign URL
+	$(UV) run python -m scripts.train_fixture
+	docker compose up -d --build app
+	bash demos/_wait_for_health.sh
+	bash demos/demo-email.sh
+	status=$$? ; docker compose down -v ; exit $$status
 
 clean:  ## remove caches and build output (keeps artifacts/ and data/)
 	rm -rf .pytest_cache .mypy_cache .ruff_cache build dist *.egg-info

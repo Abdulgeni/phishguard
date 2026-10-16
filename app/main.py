@@ -12,8 +12,18 @@ from fastapi.responses import JSONResponse
 from app.config import Settings, get_settings
 from app.errors import install_error_handlers
 from app.features.host import HostFeatureExtractor
-from app.schemas import ErrorResponse, HealthResponse, PredictRequest, PredictResponse
+from app.schemas import (
+    EmailAggregate,
+    EmailUrlVerdict,
+    ErrorResponse,
+    HealthResponse,
+    PredictEmailRequest,
+    PredictEmailResponse,
+    PredictRequest,
+    PredictResponse,
+)
 from app.services.clock import Clock, SystemClock
+from app.services.email_extractor import extract_urls
 from app.services.predictor import Predictor, PredictorError
 
 log = structlog.get_logger("phishguard.api")
@@ -98,6 +108,66 @@ def create_app() -> FastAPI:
             model_version=verdict.model_version,
             features=verdict.features,
             explanation=verdict.explanation,
+        )
+
+    @app.post(
+        "/predict_email",
+        response_model=PredictEmailResponse,
+        responses={
+            422: {"model": ErrorResponse, "description": "invalid body"},
+            429: {"model": ErrorResponse, "description": "rate limited"},
+        },
+    )
+    async def predict_email(request: Request, body: PredictEmailRequest) -> PredictEmailResponse:
+        predictor: Predictor = request.app.state.predictor
+        settings: Settings = request.app.state.settings
+        started = time.monotonic()
+
+        urls, truncated = extract_urls(body.body, max_urls=settings.email_max_urls)
+
+        results: list[EmailUrlVerdict] = []
+        phishing_count = 0
+        high_confidence_phishing = False
+        for url in urls:
+            try:
+                verdict = await run_in_threadpool(predictor.predict, url)
+            except Exception:  # one bad URL must not fail the whole scan
+                continue
+            results.append(
+                EmailUrlVerdict(url=url, label=verdict.label, confidence=verdict.confidence)
+            )
+            if verdict.label == "phishing":
+                phishing_count += 1
+                if verdict.confidence >= 0.9:
+                    high_confidence_phishing = True
+
+        if phishing_count == 0:
+            aggregate_verdict = "clean"
+        elif high_confidence_phishing:
+            aggregate_verdict = "phishing"
+        else:
+            aggregate_verdict = "suspicious"
+
+        latency_ms = (time.monotonic() - started) * 1000.0
+        log.info(
+            "predict_email",
+            endpoint="/predict_email",
+            url_count=len(results),
+            phishing_count=phishing_count,
+            verdict=aggregate_verdict,
+            truncated=truncated,
+            latency_ms=round(latency_ms, 2),
+        )
+
+        return PredictEmailResponse(
+            urls=results,
+            aggregate=EmailAggregate(
+                verdict=aggregate_verdict,
+                phishing_count=phishing_count,
+                total=len(results),
+            ),
+            truncated=truncated,
+            model_version=predictor.model_version,
         )
 
     return app

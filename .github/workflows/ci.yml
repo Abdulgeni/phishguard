@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  lint-typecheck-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Lint
+        run: uv run ruff check app scripts tests
+
+      - name: Format check
+        run: uv run ruff format --check app scripts tests
+
+      - name: Typecheck
+        run: uv run mypy app scripts
+
+      - name: Train fixture model
+        run: uv run python -m scripts.train_fixture
+
+      - name: Test
+        run: uv run pytest --maxfail=1 -q
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: lint-typecheck-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Train fixture model (baked into the image)
+        run: uv run python -m scripts.train_fixture
+
+      - name: Build image
+        run: docker build -t phishguard:ci .
+
+      - name: Smoke test the image
+        run: |
+          docker run -d --name pg-ci -p 8000:8000 phishguard:ci
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/health >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8000/health
+          curl -sf -X POST http://127.0.0.1:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"url":"http://example.com/"}'
+          docker stop pg-ci
