@@ -52,6 +52,9 @@ extend-exclude = ["notebooks"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "C4", "PT", "RUF"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["app", "scripts"]
+
 [tool.ruff.format]
 quote-style = "double"
 
