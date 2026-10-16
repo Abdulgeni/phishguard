@@ -1,16 +1,25 @@
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PhishGuard · README
+
+     NOTE FOR MAINTAINERS
+     1. The header banner URL intentionally has NO `desc=` parameter. Putting
+        `%26` (encoded `&`) in a capsule-render URL breaks on GitHub because
+        Camo decodes it and splits the query string. The tagline lives in a
+        plain HTML <p> below the banner instead.
+     2. The Mermaid block uses only quoted labels, no <br/>, no parentheses,
+        no HTML entities. Do not reintroduce those.
      ═══════════════════════════════════════════════════════════════════════════ -->
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,50:1e40af,100:0ea5e9&height=220&section=header&text=PhishGuard&fontSize=76&fontAlignY=38&fontColor=ffffff&animation=twinkling&desc=Phishing%20URL%20%26%20Email%20Classifier&descAlignY=62&descSize=20&descColor=bae6fd" width="100%" alt="PhishGuard"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,50:1e40af,100:0ea5e9&height=200&section=header&text=PhishGuard&fontSize=72&fontAlignY=38&fontColor=ffffff&animation=twinkling" width="100%" alt="PhishGuard"/>
+
+<h2>Phishing URL &amp; Email Classifier</h2>
 
 <a href="https://github.com/"><img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=22&duration=2800&pause=800&color=38BDF8&center=true&vCenter=true&width=900&lines=Production-grade+FastAPI+microservice;20-feature+contract+%C2%B7+frozen+%26+tested;Tree+ensemble+%C2%B7+calibrated+%C2%B7+reproducible;Graceful+WHOIS+degradation+%C2%B7+request+budget;Docker+%C2%B7+4+demos+%C2%B7+272+tests" alt="Typing SVG"/></a>
 
 <br/>
 
-<!-- Badges -->
 <p>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white"/></a>
   <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.115%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white"/></a>
@@ -46,10 +55,6 @@
 
 <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" height="3" alt="divider"/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     LIVE DEMO
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 <div align="center">
 
 ### 🎯 &nbsp; A live run, unedited
@@ -76,10 +81,6 @@ $ make demo
 
 <br/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     TABLE OF CONTENTS
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 <details open>
 <summary><b>📖 &nbsp; Table of contents</b></summary>
 
@@ -103,10 +104,6 @@ $ make demo
 </details>
 
 <br/>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     WHY THIS EXISTS
-     ═══════════════════════════════════════════════════════════════════════════ -->
 
 ## ✨ &nbsp; Why this exists
 
@@ -146,50 +143,38 @@ That is not a service. **PhishGuard** is the service a notebook should become:
 
 <br/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     ARCHITECTURE
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 ## 🏛 &nbsp; Architecture
 
 ```mermaid
-%%{init: { "theme": "dark", "themeVariables": { "primaryColor": "#1e40af", "primaryTextColor": "#f8fafc", "primaryBorderColor": "#38bdf8", "lineColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#0f172a" } } }%%
 flowchart TB
-    Client([🌐 Client]) -->|POST /predict<br/>POST /predict_email| API[⚡ FastAPI<br/>app/main.py]
+    Client["Client"]
+    API["FastAPI app"]
+    MW["Middleware"]
+    Schema["Pydantic validation"]
+    Predictor["Predictor"]
+    Pipeline["Feature pipeline"]
+    Lex["Lexical features 17"]
+    Host["Host features 3"]
+    Short["Shortener list offline"]
+    WHOIS["WHOIS lookup bounded"]
+    Vec["20-dim vector"]
+    Model["Tree ensemble calibrated"]
+    Resp["JSON response"]
 
-    subgraph MW["Middleware"]
-        RID[🆔 Request-ID]
-        RL[🚦 Rate Limit<br/>per-IP token bucket]
-    end
-
+    Client --> API
     API --> MW
-    MW --> Schema{✅ Pydantic<br/>validation}
-
-    Schema -->|invalid| E422[422 invalid_url]
-    Schema -->|valid| Predictor[🎯 Predictor<br/>loaded once via lifespan]
-
-    Predictor --> Pipeline[🧬 Feature Pipeline]
-    Pipeline --> Lex[📝 Lexical · 17<br/>pure · no I/O]
-    Pipeline --> Host[🌐 Host · 3]
-
-    Host --> Short[🔗 Shortener list<br/>offline]
-    Host --> WHOIS[📇 WHOIS<br/>bounded executor<br/>LRU+TTL cache<br/>min&#40;2s, budget&#41;]
-
-    Lex --> Vec[(20-dim<br/>vector)]
+    MW --> Schema
+    Schema --> Predictor
+    Predictor --> Pipeline
+    Pipeline --> Lex
+    Pipeline --> Host
+    Host --> Short
+    Host --> WHOIS
+    Lex --> Vec
     Short --> Vec
     WHOIS --> Vec
-
-    Vec --> Model[🌲 Tree Ensemble<br/>RF or GB<br/>calibrated]
-    Model --> Verdict{📊 Verdict}
-    Verdict --> Resp([Response:<br/>label · confidence<br/>features · version])
-
-    style Client fill:#0f172a,stroke:#38bdf8,color:#f8fafc
-    style Resp fill:#0f172a,stroke:#38bdf8,color:#f8fafc
-    style API fill:#1e40af,stroke:#38bdf8,color:#f8fafc
-    style Predictor fill:#1e40af,stroke:#38bdf8,color:#f8fafc
-    style Pipeline fill:#1e40af,stroke:#38bdf8,color:#f8fafc
-    style Model fill:#7c3aed,stroke:#a78bfa,color:#f8fafc
-    style E422 fill:#7f1d1d,stroke:#ef4444,color:#f8fafc
+    Vec --> Model
+    Model --> Resp
 ```
 
 <details>
@@ -222,7 +207,7 @@ flowchart TB
                     │                                   │             │
                     │                          WHOIS ───┘             │
                     │                          bounded executor        │
-                    │                          min(2s, budget)          │
+                    │                          min of 2s and budget    │
                     │                          LRU+TTL cache           │
                     └───────────────────┬─────────────────────────────┘
                                         │  20-feature dict
@@ -238,10 +223,6 @@ flowchart TB
 </details>
 
 <br/>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     FEATURE CONTRACT
-     ═══════════════════════════════════════════════════════════════════════════ -->
 
 ## 🧬 &nbsp; Feature contract
 
@@ -304,10 +285,6 @@ computed at both train and serve time and does carry signal. See
 </table>
 
 <br/>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     QUICKSTART
-     ═══════════════════════════════════════════════════════════════════════════ -->
 
 ## ⚡ &nbsp; Quickstart
 
@@ -386,10 +363,6 @@ curl -s -X POST http://127.0.0.1:8000/predict \
 </table>
 
 <br/>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     DEMOS
-     ═══════════════════════════════════════════════════════════════════════════ -->
 
 ## 🎬 &nbsp; Demos
 
@@ -483,10 +456,6 @@ and an aggregate verdict of `phishing`.
 </table>
 
 <br/>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     API
-     ═══════════════════════════════════════════════════════════════════════════ -->
 
 ## 📡 &nbsp; API
 
@@ -604,10 +573,6 @@ this endpoint.
 
 <br/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     TRAINING
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 ## 🧠 &nbsp; Training
 
 You supply a public phishing-URL CSV. The pipeline is dataset-agnostic.
@@ -665,10 +630,6 @@ make model-card
 
 <br/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     MODEL CARD
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 ## 📇 &nbsp; Model card
 
 <!-- BEGIN MODEL CARD -->
@@ -678,10 +639,6 @@ make model-card
 Run `make model-card` to render the current card below this line.
 
 <br/>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     PROJECT LAYOUT
-     ═══════════════════════════════════════════════════════════════════════════ -->
 
 ## 🗂 &nbsp; Project layout
 
@@ -742,10 +699,6 @@ phishguard/
 
 <br/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     CONFIGURATION
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 ## ⚙️ &nbsp; Configuration
 
 Every setting is an environment variable. **No secrets ship in the repo.** See
@@ -770,10 +723,6 @@ Every setting is an environment variable. **No secrets ship in the repo.** See
 
 <br/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     DESIGN DECISIONS
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 ## 🧭 &nbsp; Design decisions
 
 <details>
@@ -795,10 +744,6 @@ Every setting is an environment variable. **No secrets ship in the repo.** See
 </details>
 
 <br/>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     KNOWN LIMITATIONS
-     ═══════════════════════════════════════════════════════════════════════════ -->
 
 ## ⚠️ &nbsp; Known limitations
 
@@ -835,10 +780,6 @@ Every setting is an environment variable. **No secrets ship in the repo.** See
 
 <br/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     ROADMAP
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 ## 🛣 &nbsp; Roadmap
 
 - [x] **v1.0** &nbsp;·&nbsp; Service ships with 4 demos, 272 tests, and a fixture model.
@@ -850,19 +791,11 @@ Every setting is an environment variable. **No secrets ship in the repo.** See
 
 <br/>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     LICENSE
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 ## 📜 &nbsp; License
 
 MIT — see [`LICENSE`](./LICENSE) for the full text.
 
 <br/>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     FOOTER
-     ═══════════════════════════════════════════════════════════════════════════ -->
 
 <div align="center">
 
